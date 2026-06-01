@@ -4,6 +4,12 @@ Interactive **Reinforcement Learning** sandbox for learning Value Iteration on t
 
 Built as a self-teaching tool — meant to make Bellman's equation tangible.
 
+## Screenshots
+
+50x50 grid, random-filled traps. Robot navigates from start (top-left, blue outline) to the `+1` goal (right side). Stats header shows episode, step count, V*(start) prediction, running average, and success rate.
+
+![Run phase on 50x50](Img/screenshots/run_50x50.png)
+
 ## What you can do
 
 - Configure grid size (2x2 to 50x50), discount `gamma`, step cost, slip (stochastic actions)

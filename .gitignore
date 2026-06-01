@@ -1,0 +1,28 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual envs
+.venv/
+venv/
+env/
+
+# Env files (use .env.example as template)
+.env
+.env.local
+.env.*.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+tempCodeRunnerFile.py
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log

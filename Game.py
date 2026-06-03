@@ -108,7 +108,7 @@ def train(agent, graphics):
     n_states = agent.rows * agent.cols
     render_every = 1 if n_states <= 400 else (5 if n_states <= 2500 else 20)
     auto_ms = 400 if n_states <= 400 else (80 if n_states <= 2500 else 20)
-    state = {'mode': 'manual', 'skip': False, 'quit': False, 'last_auto': pygame.time.get_ticks()}
+    state = {'mode': 'manual', 'skip': False, 'quit': False, 'back': False, 'last_auto': pygame.time.get_ticks()}
     hint = '[SPACE]=step  [ENTER]=auto  [ESC]=skip'
     graphics.draw_training(agent.Value, agent.Policy, 0, 0.0, f'gamma={agent.gamma} cost={agent.env.step_cost} slip={agent.env.slip}  {hint}')
 
@@ -136,7 +136,7 @@ def train(agent, graphics):
                     state['skip'] = True
                     return True
                 if hit == 'back':
-                    state['quit'] = True
+                    state['back'] = True
                     state['skip'] = True
                     return True
         return False
@@ -174,7 +174,11 @@ def train(agent, graphics):
         return False
 
     agent.Value_Iteration(callback=on_sweep)
-    return 'quit' if state['quit'] else 'done'
+    if state['quit']:
+        return 'quit'
+    if state['back']:
+        return 'back'
+    return 'done'
 
 
 def run_agent(env, agent, graphics):
@@ -182,12 +186,6 @@ def run_agent(env, agent, graphics):
     v_start = agent.Value[env.start]
     stats = {'episode': 1, 'steps_in_ep': 0, 'ep_reward': 0.0,
              'wins': 0, 'losses': 0, 'total_ep_reward': 0.0, 'paused': False}
-
-    def reset_stats():
-        env.reset()
-        agent.Reward = 0
-        stats.update(episode=1, steps_in_ep=0, ep_reward=0.0,
-                     wins=0, losses=0, total_ep_reward=0.0)
 
     def render():
         eps_done = stats['wins'] + stats['losses']
@@ -216,8 +214,7 @@ def run_agent(env, agent, graphics):
                     stats['paused'] = not stats['paused']
                     render()
                 if hit == 'reset':
-                    reset_stats()
-                    render()
+                    return 'restart'
 
         if stats['paused']:
             pygame.time.wait(50)
@@ -255,30 +252,37 @@ def run_agent(env, agent, graphics):
 
 
 def run_session(rows, cols, gamma, step_cost, slip):
-    """One full pipeline: setup -> train -> run. Always fresh env."""
-    env = Environement(rows=rows, cols=cols, step_cost=step_cost, slip=slip)
-    graphics = Graphics(env)
+    """One full pipeline: setup -> train -> run. Always fresh env.
+    Reset in the run phase returns 'restart' -> rebuild from setup with a fresh grid."""
+    while True:
+        env = Environement(rows=rows, cols=cols, step_cost=step_cost, slip=slip)
+        graphics = Graphics(env)
 
-    choice = setup_rewards(env, graphics)
-    if choice == 'quit':
-        return 'quit'
-    if choice == 'back':
-        return 'back'
+        choice = setup_rewards(env, graphics)
+        if choice == 'quit':
+            return 'quit'
+        if choice == 'back':
+            return 'back'
 
-    agent = AI_Agent(env)
-    agent.gamma = gamma
+        agent = AI_Agent(env)
+        agent.gamma = gamma
 
-    print(f'\n--- Training: VI  gamma={gamma}  step_cost={step_cost}  slip={slip} ---')
-    result = train(agent, graphics)
-    if result == 'quit':
-        return 'quit'
+        print(f'\n--- Training: VI  gamma={gamma}  step_cost={step_cost}  slip={slip} ---')
+        result = train(agent, graphics)
+        if result == 'quit':
+            return 'quit'
+        if result == 'back':
+            return 'back'
 
-    print('\n--- Converged ---')
-    print_grid('Value*', agent.Value)
-    print_policy(env, agent.Policy)
+        print('\n--- Converged ---')
+        print_grid('Value*', agent.Value)
+        print_policy(env, agent.Policy)
 
-    pygame.time.wait(800)
-    return run_agent(env, agent, graphics)
+        pygame.time.wait(800)
+        result = run_agent(env, agent, graphics)
+        if result == 'restart':
+            continue
+        return result
 
 
 def main():

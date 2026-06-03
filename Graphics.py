@@ -65,7 +65,7 @@ class Graphics:
         y = HEADER - btn_h - 6
         labels = [
             ('pause', 'Resume' if paused else 'Pause'),
-            ('reset', 'Reset'),
+            ('reset', 'Restart'),
             ('back', 'Back'),
         ]
         btn_w = min(90, (self.width - 20) // len(labels))
